@@ -116,7 +116,7 @@
             for (let i = 0; i < words.length; i++) {
                 let testLine = line + words[i] + ' ';
                 let testWidth = textWidth(testLine);
-                if (testWidth > maxWidth) {
+                if (testWidth > maxWidth && line !== '') {
                     drawGlitchText(line, x, y + yOffset);
                     line = words[i] + ' ';
                     yOffset += textSizeValue * 1.2;
@@ -129,44 +129,32 @@
 
         function adjustTextSizeToFit(txt, maxWidth, maxHeight) {
             let words = txt.split(' ');
-            let textSizeValue = width * 0.03;
+            let textSizeValue = min(width, height) * 0.04; // Start with a relative size
             textSize(textSizeValue);
 
-            let yOffset = 0;
-            let testHeight = 0;
-            let line = '';
-
-            for (let i = 0; i < words.length; i++) {
-                let testLine = line + words[i] + ' ';
-                let testWidth = textWidth(testLine);
-                if (testWidth > maxWidth) {
-                    testHeight += textSizeValue * 1.2;
-                    line = words[i] + ' ';
-                } else {
-                    line = testLine;
-                }
-            }
-            testHeight += textSizeValue * 1.2;
-
-            while (testHeight > maxHeight) {
-                textSizeValue *= 0.95;
-                textSize(textSizeValue);
+            let testHeight;
+            do {
                 testHeight = 0;
-                line = '';
-                for (let i = 0; i < words.length; i++) {
-                    let testLine = line + words[i] + ' ';
+                let line = '';
+                for (let word of words) {
+                    let testLine = line + word + ' ';
                     let testWidth = textWidth(testLine);
-                    if (testWidth > maxWidth) {
+                    if (testWidth > maxWidth && line !== '') {
                         testHeight += textSizeValue * 1.2;
-                        line = words[i] + ' ';
+                        line = word + ' ';
                     } else {
                         line = testLine;
                     }
                 }
                 testHeight += textSizeValue * 1.2;
-            }
 
-            drawWrappedGlitchText(txt, maxWidth, width / 2, height * 0.05);
+                if (testHeight > maxHeight) {
+                    textSizeValue *= 0.95;
+                    textSize(textSizeValue);
+                }
+            } while (testHeight > maxHeight);
+
+            drawWrappedGlitchText(txt, maxWidth, width / 2, height * 0.02);
         }
 
         function drawScanLines() {
@@ -178,6 +166,8 @@
 
         function windowResized() {
             resizeCanvas(windowWidth, windowHeight);
+            // Force redraw when window is resized
+            draw();
         }
 
         document.addEventListener('DOMContentLoaded', (event) => {
