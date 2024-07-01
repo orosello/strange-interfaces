@@ -18,7 +18,6 @@
         overflow: hidden;
         font-family: "VT323", monospace;
       }
-
       #video-background {
         position: fixed;
         right: 0;
@@ -30,55 +29,141 @@
         z-index: -1;
         object-fit: cover;
       }
-
       #p5-canvas {
         position: fixed;
         top: 0;
         left: 0;
         z-index: 1;
       }
+      #text-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 2;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+      }
+      #text-overlay.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      #text-content {
+        width: 90%;
+        height: 90%;
+        padding: 5% 5%;
+        box-sizing: border-box;
+        text-align: justify;
+        overflow-y: auto;
+        font-size: 3.5vmin;
+        line-height: 1.3;
+      }
+      .link,
+      #text-content a {
+        color: white;
+        text-decoration: none;
+        cursor: pointer;
+        position: relative;
+        display: inline-block;
+      }
+      .link:hover,
+      #text-content a:hover {
+        text-decoration: underline;
+      }
+      .glitch-effect {
+        position: absolute;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+        mix-blend-mode: exclusion;
+      }
+      #text-content::-webkit-scrollbar {
+        width: 5px;
+      }
+      #text-content::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.1);
+      }
+      #text-content::-webkit-scrollbar-thumb {
+        background: rgba(0, 255, 0, 0.5);
+      }
+      #text-content::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 255, 0, 0.7);
+      }
+      @media (max-aspect-ratio: 1/1) {
+        #text-content {
+          font-size: 4.5vmin;
+        }
+      }
     </style>
   </head>
-
   <body>
     <video id="video-background" autoplay loop muted playsinline>
       <source src="strange.mov" type="video/mp4" />
       Your browser does not support the video tag.
     </video>
     <div id="p5-canvas"></div>
+    <div id="text-overlay">
+      <div id="text-content"></div>
+    </div>
     <script>
       let glitchIntensity = 0;
       let showStrangeInterfaces = true;
-      const alternativeText = `At the intersection of neuroscience, engineering, and artistic vision, we forge unconventional interfaces that serve as transformative conduits between human perception and physical reality. Our work manifests as a series of enigmatic mediating layers, each meticulously designed to filter, augment, or fundamentally alter the fabric of experiential reality. Drawing inspiration from cutting-edge neuroscience research, our creations are brought to life through rigorous engineering principles, yet remain firmly rooted in the rich soil of artistic expression and design philosophy. We revel in the ambiguous, the unexpected, and the profoundly unique, cultivating a sense of wonder that permeates every facet of our practice. Our portfolio traverses a diverse landscape of human-computer interaction, encompassing such pioneering explorations in dream engineering, cognitive enhancement through memory augmentation, and the development of mindfulness-inducing artifacts. In every project, we seek to redefine the very essence of human interaction with technology and the environment. By reimagining the ways in which we perceive and engage with the world around us, we invite audiences to question their preconceptions and explore new modes of being. Our work stands as a testament to the power of interdisciplinary collaboration and the endless possibilities that emerge when art, science, and technology converge. Contact at strangeinterfaces@gmail.com`;
+      const alternativeText = `At the intersection of <span class="link" data-href="https://en.wikipedia.org/wiki/Neuroscience">neuroscience</span>, <span class="link" data-href="https://en.wikipedia.org/wiki/Engineering">engineering</span>, and <span class="link" data-href="https://www.google.com">artistic</span> vision, we forge unconventional interfaces that serve as transformative conduits between human perception and physical reality. Our work manifests as a series of enigmatic mediating layers, each meticulously designed to filter, augment, or fundamentally alter the fabric of experiential reality. Drawing inspiration from cutting-edge neuroscience research, our creations are brought to life through rigorous engineering principles, yet remain firmly rooted in the rich soil of artistic expression and design philosophy. We revel in the ambiguous, the unexpected, and the profoundly unique, cultivating a sense of wonder that permeates every facet of our practice. Our portfolio traverses a diverse landscape of <span class="link" data-href="https://en.wikipedia.org/wiki/Human%E2%80%93computer_interaction">human-computer interaction</span>, encompassing such pioneering explorations in dream engineering, cognitive enhancement through memory augmentation, and the development of mindfulness-inducing artifacts. In every project, we seek to redefine the very essence of human interaction with technology and the environment. By reimagining the ways in which we perceive and engage with the world around us, we invite audiences to question their preconceptions and explore new modes of being. Our work stands as a testament to the power of interdisciplinary collaboration and the endless possibilities that emerge when art, science, and technology converge. Contact at <a href="mailto:strangeinterfaces@gmail.com">strangeinterfaces@gmail.com</a>`;
 
       function setup() {
         let canvas = createCanvas(windowWidth, windowHeight);
         canvas.parent("p5-canvas");
         textFont("VT323");
-        textAlign(CENTER, TOP);
-        document.body.addEventListener("click", () => {
-          showStrangeInterfaces = !showStrangeInterfaces;
+        textAlign(CENTER, CENTER);
+
+        const textContent = document.getElementById("text-content");
+        textContent.innerHTML = alternativeText;
+
+        document.body.addEventListener("click", handleClick);
+
+        // Add click event listeners to the link spans and email link
+        document.querySelectorAll(".link, #text-content a").forEach((link) => {
+          link.addEventListener("click", (e) => {
+            e.stopPropagation();
+            window.open(e.target.dataset.href || e.target.href, "_blank");
+          });
         });
+
+        // Start the glitch effect on links
+        applyGlitchEffectToLinks();
       }
 
       function draw() {
         clear();
         updateGlitchIntensity();
         if (showStrangeInterfaces) {
-          textSize(width * 0.1);
-          let strangeHeight = textAscent() + textDescent();
-          let interfacesHeight = textAscent() + textDescent();
-          let totalHeight = strangeHeight + interfacesHeight;
-          drawGlitchText("STRANGE", width / 2, height / 2 - totalHeight / 2);
-          drawGlitchText(
-            "INTERFACES",
-            width / 2,
-            height / 2 - totalHeight / 2 + strangeHeight
-          );
-        } else {
-          adjustTextSizeToFit(alternativeText, width * 0.95, height * 0.95);
+          drawStrangeInterfaces();
         }
         drawScanLines();
+      }
+
+      function drawStrangeInterfaces() {
+        let fontSize = min(width, height) * 0.1;
+        textSize(fontSize);
+        let strangeHeight = textAscent() + textDescent();
+        let interfacesHeight = textAscent() + textDescent();
+        let totalHeight = strangeHeight + interfacesHeight;
+
+        push();
+        textAlign(CENTER, CENTER);
+        drawGlitchText("STRANGE", width / 2, height / 2 - strangeHeight / 2);
+        drawGlitchText(
+          "INTERFACES",
+          width / 2,
+          height / 2 + interfacesHeight / 2
+        );
+        pop();
       }
 
       function updateGlitchIntensity() {
@@ -113,56 +198,29 @@
         pop();
       }
 
-      function drawWrappedGlitchText(txt, maxWidth, x, y) {
-        let words = txt.split(" ");
-        let line = "";
-        let yOffset = 0;
-        let textSizeValue = textSize();
+      function applyGlitchEffectToLinks() {
+        const links = document.querySelectorAll(".link, #text-content a");
+        links.forEach((link) => {
+          const glitchElement = document.createElement("span");
+          glitchElement.className = "glitch-effect";
+          glitchElement.textContent = link.textContent;
+          link.appendChild(glitchElement);
 
-        for (let i = 0; i < words.length; i++) {
-          let testLine = line + words[i] + " ";
-          let testWidth = textWidth(testLine);
-          if (testWidth > maxWidth && line !== "") {
-            drawGlitchText(line, x, y + yOffset);
-            line = words[i] + " ";
-            yOffset += textSizeValue * 1.2;
-          } else {
-            line = testLine;
-          }
-        }
-        drawGlitchText(line, x, y + yOffset);
-      }
-
-      function adjustTextSizeToFit(txt, maxWidth, maxHeight) {
-        let words = txt.split(" ");
-        let textSizeValue = min(width, height) * 0.04; // Start with a relative size
-        textSize(textSizeValue);
-
-        let testHeight;
-        do {
-          testHeight = 0;
-          let line = "";
-          for (let word of words) {
-            let testLine = line + word + " ";
-            let testWidth = textWidth(testLine);
-            if (testWidth > maxWidth && line !== "") {
-              testHeight += textSizeValue * 1.2;
-              line = word + " ";
+          setInterval(() => {
+            if (random() < 0.1) {
+              const r = Math.floor(random(100, 255));
+              const g = Math.floor(random(100, 255));
+              const b = Math.floor(random(100, 255));
+              const offsetX = random(-3, 3);
+              const offsetY = random(-3, 3);
+              glitchElement.style.color = `rgb(${r},${g},${b})`;
+              glitchElement.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+              glitchElement.style.opacity = random(0.5, 0.8);
             } else {
-              line = testLine;
+              glitchElement.style.opacity = "0";
             }
-          }
-          testHeight += textSizeValue * 1.2;
-
-          if (testHeight > maxHeight) {
-            textSizeValue *= 0.95;
-            textSize(textSizeValue);
-          }
-        } while (testHeight > maxHeight);
-
-        // Adjust y position to center the text vertically
-        let yOffset = (height - testHeight) / 2;
-        drawWrappedGlitchText(txt, maxWidth, width / 2, yOffset);
+          }, 50);
+        });
       }
 
       function drawScanLines() {
@@ -172,9 +230,21 @@
         }
       }
 
+      function handleClick(event) {
+        if (
+          event.target.classList.contains("link") ||
+          event.target.tagName === "A"
+        ) {
+          // If a link was clicked, don't toggle the view
+          return;
+        }
+        const textOverlay = document.getElementById("text-overlay");
+        showStrangeInterfaces = !showStrangeInterfaces;
+        textOverlay.classList.toggle("visible", !showStrangeInterfaces);
+      }
+
       function windowResized() {
         resizeCanvas(windowWidth, windowHeight);
-        // Force redraw when window is resized
         draw();
       }
 
